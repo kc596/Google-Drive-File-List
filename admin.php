@@ -1,13 +1,4 @@
 <?php
-	if(1<0){
-		if (!isset($_SESSION))
-		{
-			session_start();
-		}
-		session_destroy();
-		die();
-	}
-	
 	require_once '/vendor/autoload.php';
 	require_once 'core/init.php';
 	if(!isset($_SESSION)) { session_start(); }
@@ -26,16 +17,24 @@
 	$redirect_uri = 'http://' . $_SERVER['HTTP_HOST'] .'/tercept/oauth2callback.php';
 	$client->setRedirectUri($redirect_uri);
 
-	$access_token = "ya29.GltHBEddHp-_0Hd6KDigPxgNc0Z1cQNmCZbm98QiiR1aWWa595Bke6Y-FLjtUYjFDTYaVQ8iTl5HLndBnB16oBRkQRQs-SYroVOg_OZmPJeXUDPJ7Qlz3tX5CNPf";
-	//$client->setAccessToken($access_token);
-	$refreshToken = "1/NPJAQ7QuBlujBR4O7JchAmfiydXV29fb3FGEy_o3gFewJAZM7KAb0hXc_F9NW9lf";
-	$client->refreshToken($refreshToken);
+	/* ################### STORING IN DATABASE #################### */
+		$db_connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+		$sql = "Select email, refresh_token from user";
+		$result = mysqli_query($db_connection,$sql);
+		while($row = mysqli_fetch_assoc($result))
+	    {
+	        $email = $row['email'];
+	        $refreshToken = $row['refresh_token'];
+	        $client->refreshToken($refreshToken);
+			$drive = new Google_Service_Drive($client);
+			echo "<hr> Files of ".$email." : <hr>";
+			$files = $drive->files->listFiles(array());
+	  		foreach ($files['files'] as $nm) {
+	  			echo $nm['name']."<br>";
+	  		}
 
-	/*print_r($client->getAccessToken());
-	echo "<hr><hr><hr>";*/
-		$drive = new Google_Service_Drive($client);
-		$files = $drive->files->listFiles(array());
-  		foreach ($files['files'] as $nm) {
-  			echo $nm['name']."<br>";
-  		}
+	        echo  "<hr>";
+	    }
+		$db_connection->close();
+	/* ############################################################ */
 ?>
